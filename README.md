@@ -40,7 +40,7 @@ uvicorn main:app --reload
 
 ## Endpoints
 
-See the `routers/` folder for endpoint implementations. The homepage endpoint is `GET /movies/homepage` and expects a `seed` query parameter to maintain consistent randomized pagination.
+See the `/docs` for endpoint implementations. 
 
 ## Security
 
