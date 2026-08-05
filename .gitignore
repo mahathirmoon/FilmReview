@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE/editor
+.vscode/
+.idea/
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+
+# Database files
+*.sqlite3
+
+# Test
+.pytest_cache/
+
+# Logs
+*.log
+
+# Ignore secrets
+secrets/
+
+# MySQL connector caches
+.mysql_history
