@@ -3,11 +3,13 @@ from database import get_db
 
 # 1. Import your new router
 from routers import movies 
+from routers import auth
 
 app = FastAPI(title="Film Review API")
 
 # 2. Tell the main app to include all the routes from movies.py
 app.include_router(movies.router)
+app.include_router(auth.router)
 
 @app.get("/")
 def read_root():
