@@ -15,6 +15,7 @@ def get_homepage_movies(
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
     limit: int = Query(20, description="How many records to return (LIMIT)", le=50),
     conn = Depends(get_db)
+    
 ):
     """
     Feeds the home screen with a randomized list of movies, safely paginated using a seed.

@@ -4,12 +4,25 @@ from database import get_db
 # 1. Import your new router
 from routers import movies 
 from routers import auth
+from routers import users
+from routers import watchlist
+from routers import social
+from routers import reviews
+from routers import follow
+
+
 
 app = FastAPI(title="Film Review API")
 
 # 2. Tell the main app to include all the routes from movies.py
 app.include_router(movies.router)
 app.include_router(auth.router)
+app.include_router(follow.router)
+app.include_router(reviews.router)
+app.include_router(users.router)
+app.include_router(social.router)
+app.include_router(watchlist.router)
+
 
 @app.get("/")
 def read_root():

@@ -11,7 +11,7 @@ def get_current_user(x_session_token: str = Header(...), conn = Depends(get_db))
     
     try:
         # Check who owns this token
-        cursor.execute("SELECT * FROM Users WHERE session_token = %s", (x_session_token,))
+        cursor.execute("SELECT user_id,email,username FROM Users WHERE session_token = %s", (x_session_token,))
         user = cursor.fetchone()
         
         if not user:
