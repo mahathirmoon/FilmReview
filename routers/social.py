@@ -58,10 +58,6 @@ def get_activity_feed(
         cursor.close()
 
 
-# ---------------------------------------------------------------------------
-# PUBLIC PROFILES
-# ---------------------------------------------------------------------------
-
 @router.get("/{user_id}")
 def get_public_profile(user_id: int, conn=Depends(get_db)):
     cursor = conn.cursor(dictionary=True)

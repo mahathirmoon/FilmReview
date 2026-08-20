@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FilmHub</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="brand">FilmHub</div>
+    <div class="nav-links">
+      <span>Home</span>
+      <span>Genres</span>
+      <span>Watchlist</span>
+    </div>
+    <div class="nav-actions" id="nav-actions">
+      <a class="btn" href="/login">Log in</a>
+      <a class="btn btn-primary" href="/login?mode=signup">Sign up</a>
+    </div>
+  </nav>
+
+  <section class="section">
+    <h2>Discover</h2>
+    <div class="poster-grid" id="movie-grid">
+      <p class="state-msg">Loading…</p>
+    </div>
+  </section>
+
+  <script src="/static/script.js"></script>
+  <script>
+    renderNavAuthState();
+    loadPosterSection("movie-grid");
+  </script>
+</body>
+</html>
