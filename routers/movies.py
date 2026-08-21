@@ -154,11 +154,11 @@ def movie(id:int,conn = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Movie not found")
 
         reviews_query = """
-            SELECT users.username, reviews.rating, reviews.review_text, reviews.created_at
-            FROM reviews
-            JOIN users ON reviews.user_id = users.user_id
-            WHERE reviews.film_id = %s
-            ORDER BY reviews.created_at DESC
+           SELECT reviews.review_id, users.username, reviews.rating, reviews.review_text, reviews.created_at
+    FROM reviews
+    JOIN users ON reviews.user_id = users.user_id
+    WHERE reviews.film_id = %s
+    ORDER BY reviews.created_at DESC
         """
         cursor.execute(reviews_query,(id,))
         movie["reviews"] = cursor.fetchall()

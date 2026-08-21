@@ -14,6 +14,15 @@
       <span>Home</span>
       <span>Genres</span>
       <span>Watchlist</span>
+      <a href="/static/feed.html" style="color:inherit; text-decoration:none;">Activity Feed</a>
+    </div>
+    <div class="nav-search">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="movie-search-input" placeholder="Search movies…" />
+      <button class="nav-search-clear" id="movie-search-clear" style="display:none;" aria-label="Clear search">✕</button>
     </div>
     <div class="nav-actions" id="nav-actions">
       <a class="btn" href="/login">Log in</a>
@@ -22,7 +31,7 @@
   </nav>
 
   <section class="section">
-    <h2>Discover</h2>
+    <h2 id="movie-grid-heading">Discover</h2>
     <div class="poster-grid" id="movie-grid">
       <p class="state-msg">Loading…</p>
     </div>
@@ -32,6 +41,7 @@
   <script>
     renderNavAuthState();
     loadPosterSection("movie-grid");
+    setupMovieSearch("movie-search-input", null, "movie-search-clear", "movie-grid", "movie-grid-heading");
   </script>
 </body>
 </html>

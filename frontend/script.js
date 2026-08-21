@@ -2,6 +2,19 @@
 // same-origin — no need to hardcode a host/port here.
 const API_BASE = "";
 
+/* ---------------- Shared auth helper ---------------- */
+
+// Builds the x-session-token header your backend expects on protected routes.
+// Returns {} if not logged in, so callers can spread it safely either way.
+function getAuthHeaders() {
+  const token = localStorage.getItem("session_token");
+  return token ? { "x-session-token": token } : {};
+}
+
+function isLoggedIn() {
+  return Boolean(localStorage.getItem("session_token"));
+}
+
 /* ---------------- Homepage: poster grid ---------------- */
 
 // Reads what login stored in localStorage and updates the navbar —
@@ -97,6 +110,79 @@ function resolvePosterUrl(posterUrl) {
   return `${TMDB_IMAGE_BASE}${filename}`;
 }
 
+// Wires up the navbar search box to /movies/search, falling back to the
+// default randomized /movies/homepage feed when the search box is cleared.
+// searchBtnId is optional — pass null when there's no separate button (live search).
+function setupMovieSearch(inputId, searchBtnId, clearBtnId, gridId, headingId) {
+  const input = document.getElementById(inputId);
+  const searchBtn = searchBtnId ? document.getElementById(searchBtnId) : null;
+  const clearBtn = document.getElementById(clearBtnId);
+  const grid = document.getElementById(gridId);
+  const heading = document.getElementById(headingId);
+  if (!input || !grid) return;
+
+  let debounceTimer = null;
+
+  async function runSearch() {
+    const query = input.value.trim();
+
+    if (!query) {
+      clearBtn.style.display = "none";
+      if (heading) heading.textContent = "Discover";
+      loadPosterSection(gridId);
+      return;
+    }
+
+    if (heading) heading.textContent = `Results for "${query}"`;
+    clearBtn.style.display = "inline-block";
+    grid.innerHTML = `<p class="state-msg">Searching…</p>`;
+
+    try {
+      // Backend route: GET /movies/search?title=&page=&limit=
+      const res = await fetch(
+        `${API_BASE}/movies/search?title=${encodeURIComponent(query)}&page=1&limit=40`
+      );
+
+      if (!res.ok) {
+        throw new Error(`Request failed with status ${res.status}`);
+      }
+
+      const movies = await res.json();
+
+      if (!Array.isArray(movies) || movies.length === 0 || movies[0] === "No Movie Found") {
+        grid.innerHTML = `<p class="state-msg">No movies found for "${escapeHtml(query)}".</p>`;
+        return;
+      }
+
+      grid.innerHTML = movies.map(renderPosterCard).join("");
+    } catch (err) {
+      console.error("Movie search failed:", err);
+      grid.innerHTML = `<p class="state-msg">Couldn't search movies right now.</p>`;
+    }
+  }
+
+  input.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runSearch, 350);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      clearTimeout(debounceTimer);
+      runSearch();
+    }
+  });
+
+  if (searchBtn) searchBtn.addEventListener("click", runSearch);
+
+  clearBtn.addEventListener("click", () => {
+    input.value = "";
+    clearBtn.style.display = "none";
+    if (heading) heading.textContent = "Discover";
+    loadPosterSection(gridId);
+  });
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -128,10 +214,98 @@ async function loadMovieDetail() {
 
     const movie = await res.json();
     container.innerHTML = renderMovieDetail(movie);
+    setupReviewForm(movieId);
   } catch (err) {
     console.error("Failed to load movie:", err);
     container.innerHTML = `<p class="state-msg">Couldn't load this movie. ${escapeHtml(err.message || "")}</p>`;
   }
+}
+
+function setupReviewForm(movieId) {
+  const formContainer = document.getElementById("review-form-container");
+  if (!formContainer) return;
+
+  if (!isLoggedIn()) {
+    formContainer.innerHTML = `
+      <p class="state-msg">
+        <a href="/login" style="color:#e63946;">Log in</a> to write a review.
+      </p>
+    `;
+    return;
+  }
+
+  renderAddReviewButton(formContainer, movieId);
+}
+
+function renderAddReviewButton(formContainer, movieId) {
+  formContainer.innerHTML = `
+    <button type="button" class="btn btn-primary" id="add-review-btn" style="margin-bottom:20px;">Add your review</button>
+  `;
+
+  document.getElementById("add-review-btn").addEventListener("click", () => {
+    renderReviewForm(formContainer, movieId);
+  });
+}
+
+function renderReviewForm(formContainer, movieId) {
+  formContainer.innerHTML = `
+    <form id="review-form" class="compact-form">
+      <div class="field">
+        <label for="review-rating">Your rating (1–10)</label>
+        <input type="number" id="review-rating" min="1" max="10" step="0.1" required />
+      </div>
+      <div class="field">
+        <label for="review-text">Your review</label>
+        <textarea id="review-text" rows="3" required></textarea>
+      </div>
+      <p class="error-text" id="review-error"></p>
+      <div style="display:flex; gap:8px;">
+        <button type="submit" class="btn btn-primary">Post review</button>
+        <button type="button" class="btn" id="cancel-review-btn">Cancel</button>
+      </div>
+    </form>
+  `;
+
+  document.getElementById("cancel-review-btn").addEventListener("click", () => {
+    renderAddReviewButton(formContainer, movieId);
+  });
+
+  document.getElementById("review-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const rating = parseFloat(document.getElementById("review-rating").value);
+    const reviewText = document.getElementById("review-text").value.trim();
+    const errorEl = document.getElementById("review-error");
+    errorEl.style.display = "none";
+
+    try {
+      // Backend route: POST /reviews/  { film_id, rating, review_text }
+      // Requires x-session-token header
+      const res = await fetch(`${API_BASE}/reviews/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({
+          film_id: Number(movieId),
+          rating: rating,
+          review_text: reviewText,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.detail || "Couldn't post review.");
+      }
+
+      // Reload the whole detail view so the new review and updated rating show up
+      loadMovieDetail();
+    } catch (err) {
+      errorEl.textContent = err.message || "Couldn't post review. Try again.";
+      errorEl.style.display = "block";
+    }
+  });
 }
 
 function renderMovieDetail(movie) {
@@ -176,7 +350,8 @@ function renderMovieDetail(movie) {
     <div class="cast-grid">${castHtml}</div>
 
     <h2 class="detail-section-title">Reviews</h2>
-    <div>${reviewsHtml}</div>
+    <div id="review-form-container"></div>
+    <div id="reviews-list">${reviewsHtml}</div>
   `;
 }
 
@@ -201,14 +376,183 @@ function renderReviewCard(review) {
     ? new Date(review.created_at).toLocaleDateString()
     : "";
 
+  const isOwnReview =
+    review.username && review.username === localStorage.getItem("username");
+
+  const actionsHtml =
+    isOwnReview && review.review_id
+      ? `
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button class="btn" style="padding:4px 10px; font-size:12px;" onclick="startEditReview(${review.review_id}, ${review.rating}, '${escapeJs(review.review_text || "")}')">Edit</button>
+          <button class="btn" style="padding:4px 10px; font-size:12px;" onclick="deleteReview(${review.review_id})">Delete</button>
+        </div>
+      `
+      : "";
+
   return `
-    <div class="review-card">
+    <div class="review-card" id="review-${review.review_id || ""}">
       <div class="review-header">
         <span class="review-username">${username}</span>
         <span class="review-rating">★ ${rating}</span>
       </div>
       ${date ? `<div class="review-date">${escapeHtml(date)}</div>` : ""}
       <p class="review-text">${text}</p>
+      ${actionsHtml}
+    </div>
+  `;
+}
+
+// Escapes a string for safe embedding inside a single-quoted JS string
+// within an inline onclick="" attribute.
+function escapeJs(str) {
+  return String(str)
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, "\\n");
+}
+
+async function deleteReview(reviewId) {
+  if (!confirm("Delete this review?")) return;
+
+  try {
+    // Backend route: DELETE /reviews/{review_id}  (requires x-session-token header)
+    const res = await fetch(`${API_BASE}/reviews/${reviewId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.detail || "Couldn't delete review.");
+    }
+
+    loadMovieDetail();
+  } catch (err) {
+    alert(err.message || "Couldn't delete review.");
+  }
+}
+
+function startEditReview(reviewId, currentRating, currentText) {
+  const card = document.getElementById(`review-${reviewId}`);
+  if (!card) return;
+
+  card.innerHTML = `
+    <div class="compact-form" style="margin:0;">
+      <div class="field">
+        <label>Rating (1–10)</label>
+        <input type="number" id="edit-rating-${reviewId}" min="1" max="10" step="0.1" value="${currentRating}" />
+      </div>
+      <div class="field">
+        <label>Review</label>
+        <textarea id="edit-text-${reviewId}" rows="3">${currentText}</textarea>
+      </div>
+      <p class="error-text" id="edit-error-${reviewId}"></p>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-primary" style="padding:4px 10px; font-size:12px;" onclick="submitEditReview(${reviewId})">Save</button>
+        <button class="btn" style="padding:4px 10px; font-size:12px;" onclick="loadMovieDetail()">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+async function submitEditReview(reviewId) {
+  const rating = document.getElementById(`edit-rating-${reviewId}`).value;
+  const reviewText = document.getElementById(`edit-text-${reviewId}`).value.trim();
+  const errorEl = document.getElementById(`edit-error-${reviewId}`);
+
+  try {
+    // Backend route: PUT /reviews/{review_id}?rating=&review_text=
+    // rating/review_text are plain function params (not a Pydantic body),
+    // so FastAPI expects them as query params here, not JSON.
+    const params = new URLSearchParams({ rating, review_text: reviewText });
+    const res = await fetch(`${API_BASE}/reviews/${reviewId}?${params.toString()}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.detail || "Couldn't update review.");
+    }
+
+    loadMovieDetail();
+  } catch (err) {
+    if (errorEl) {
+      errorEl.textContent = err.message || "Couldn't update review.";
+      errorEl.style.display = "block";
+    }
+  }
+}
+
+/* ---------------- Activity feed page ---------------- */
+
+async function loadActivityFeed() {
+  const container = document.getElementById("feed-list");
+  if (!container) return;
+
+  if (!isLoggedIn()) {
+    container.innerHTML = `
+      <p class="state-msg">
+        <a href="/login" style="color:#e63946;">Log in</a> to see reviews from people you follow.
+      </p>
+    `;
+    return;
+  }
+
+  try {
+    // Backend route: GET /social/me/feed  (requires x-session-token header)
+    // Response: { page, limit, results: [...], next_page }
+    const res = await fetch(`${API_BASE}/social/me/feed`, {
+      headers: getAuthHeaders(),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.detail || `Request failed with status ${res.status}`);
+    }
+
+    const items = data.results;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      container.innerHTML = `<p class="state-msg">No activity yet. Follow other users to see their reviews here.</p>`;
+      return;
+    }
+
+    container.innerHTML = items.map(renderFeedItem).join("");
+  } catch (err) {
+    console.error("Failed to load activity feed:", err);
+    container.innerHTML = `<p class="state-msg">Couldn't load the feed. ${escapeHtml(err.message || "")}</p>`;
+  }
+}
+
+function renderFeedItem(item) {
+  const username = escapeHtml(item.username || "Someone");
+  const title = escapeHtml(item.title || "Untitled");
+  const rating = item.rating != null ? Number(item.rating).toFixed(1) : "—";
+  const text = escapeHtml(item.review_text || "");
+  const date = item.created_at ? new Date(item.created_at).toLocaleDateString() : "";
+  const posterUrl = resolvePosterUrl(item.poster_url);
+
+  const posterHtml = posterUrl
+    ? `<img src="${escapeHtml(posterUrl)}" alt="${title} poster" style="width:60px; height:90px; object-fit:cover; border-radius:6px;" />`
+    : `<div class="poster-placeholder" style="width:60px; height:90px; border-radius:6px; flex-shrink:0;">No image</div>`;
+
+  return `
+    <div class="review-card" style="display:flex; gap:14px;">
+      <a href="/static/movie.html?id=${item.film_id}">${posterHtml}</a>
+      <div style="flex:1;">
+        <div class="review-header">
+          <span class="review-username">${username} reviewed
+            <a href="/static/movie.html?id=${item.film_id}" style="color:#f2f2f2;">${title}</a>
+          </span>
+          <span class="review-rating">★ ${rating}</span>
+        </div>
+        ${date ? `<div class="review-date">${escapeHtml(date)}</div>` : ""}
+        <p class="review-text">${text}</p>
+      </div>
     </div>
   `;
 }

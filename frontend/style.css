@@ -15,6 +15,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
   padding: 14px 24px;
   border-bottom: 1px solid #2a2a33;
 }
@@ -80,6 +81,80 @@ body {
   color: #b3b3bd;
   font-weight: 500;
   margin: 0 0 12px;
+}
+
+.nav-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #1c1c24;
+  border: 1px solid #2a2a33;
+  border-radius: 20px;
+  padding: 6px 12px;
+  width: 200px;
+  transition: width 0.2s ease, border-color 0.2s ease;
+}
+
+.nav-search:focus-within {
+  width: 280px;
+  border-color: #e63946;
+}
+
+.nav-search-icon {
+  width: 15px;
+  height: 15px;
+  color: #6a6a75;
+  flex-shrink: 0;
+}
+
+.nav-search input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #f2f2f2;
+  font-size: 13px;
+  outline: none;
+}
+
+.nav-search input[type="text"]::placeholder {
+  color: #6a6a75;
+}
+
+.nav-search-clear {
+  background: none;
+  border: none;
+  color: #6a6a75;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.nav-search-clear:hover {
+  color: #f2f2f2;
+}
+
+.people-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.person-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1c1c24;
+  border: 1px solid #2a2a33;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.person-name {
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .poster-grid {
@@ -348,4 +423,47 @@ body {
   font-size: 13px;
   margin: 8px 0 0;
   display: none;
+}
+
+/* ---------- Compact right-aligned forms (review add/edit) ---------- */
+
+.compact-form {
+  max-width: 280px;
+  margin-left: auto;
+  margin-bottom: 20px;
+  background: #1c1c24;
+  border: 1px solid #2a2a33;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.compact-form .field {
+  margin-bottom: 10px;
+}
+
+.compact-form .field label {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.compact-form input,
+.compact-form textarea {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #3a3a45;
+  background: #14141a;
+  color: #f2f2f2;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.compact-form textarea {
+  resize: vertical;
+}
+
+.compact-form input:focus,
+.compact-form textarea:focus {
+  outline: none;
+  border-color: #e63946;
 }

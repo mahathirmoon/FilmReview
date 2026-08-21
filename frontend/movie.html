@@ -10,8 +10,9 @@
 
   <nav class="navbar">
     <a class="brand" href="/" style="color:inherit; text-decoration:none;">FilmHub</a>
-    <div class="nav-actions">
+    <div style="display:flex; gap:10px; align-items:center;">
       <a class="btn" href="/">Back to home</a>
+      <div class="nav-actions" id="nav-actions"></div>
     </div>
   </nav>
 
@@ -21,6 +22,7 @@
 
   <script src="/static/script.js"></script>
   <script>
+    renderNavAuthState();
     loadMovieDetail();
   </script>
 </body>
