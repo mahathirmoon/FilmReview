@@ -167,9 +167,10 @@ def person_filmography(person_id: int, conn=Depends(get_db)):
         cursor = conn.cursor(dictionary=True)
         query = """
             SELECT films.film_id, films.title, films.release_year, films.poster_url, films.avg_rating,
-                   film_cast.role_name
+                   film_cast.role_name, people.name as person_name
             FROM film_cast
             JOIN films ON film_cast.film_id = films.film_id
+            JOIN people ON film_cast.person_id = people.person_id
             WHERE film_cast.person_id = %s
             ORDER BY films.release_year DESC, films.title ASC
         """
@@ -264,7 +265,7 @@ def movie(id:int,conn = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Movie not found")
 
         reviews_query = """
-           SELECT reviews.review_id, users.username, reviews.rating, reviews.review_text, reviews.created_at, reviews.like_count
+           SELECT reviews.review_id, users.user_id, users.username, reviews.rating, reviews.review_text, reviews.created_at, reviews.like_count
     FROM reviews
     JOIN users ON reviews.user_id = users.user_id
     WHERE reviews.film_id = %s
@@ -276,7 +277,7 @@ def movie(id:int,conn = Depends(get_db)):
 
         cast_q="""
 
-                SELECT people.name ,film_cast.role_name
+                SELECT people.person_id, people.name, film_cast.role_name
                 From film_cast
                 JOIN people ON film_cast.person_id = people.person_id
                 WHERE film_cast.film_id = %s

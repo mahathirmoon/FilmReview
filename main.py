@@ -62,6 +62,10 @@ def movie_page():
 def suggestions_page():
     return FileResponse("frontend/suggestions.html")
 
+@app.get("/cast")
+def cast_page():
+    return FileResponse("frontend/cast.html")
+
 
 @app.get("/test-db")
 def test_database_connection():

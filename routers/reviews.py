@@ -123,6 +123,16 @@ def create_review(review:postReview,conn = Depends(get_db),current_user=Depends(
     try:
         cursor=conn.cursor()
 
+        # Check if the user has already reviewed this film
+        cursor.execute(
+            "SELECT review_id FROM Reviews WHERE user_id = %s AND film_id = %s",
+            (current_user['user_id'], review.film_id)
+        )
+        existing_review = cursor.fetchone()
+        
+        if existing_review:
+            raise HTTPException(status_code=400, detail="You have already reviewed this film")
+
         insert_query = """INSERT INTO Reviews(user_id,film_id,rating,review_text)
                            VALUES(%s,%s,%s,%s) """
 
@@ -135,6 +145,8 @@ def create_review(review:postReview,conn = Depends(get_db),current_user=Depends(
         conn.commit()
         return {"messeage":"Review posted"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500,detail=str(e))

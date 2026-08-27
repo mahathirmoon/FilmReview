@@ -469,6 +469,17 @@ async function toggleReviewLike(reviewId, btnElement) {
   }
 }
 
+async function deleteReview(reviewId) {
+  if (!confirm("Are you sure you want to delete this review?")) return;
+  try {
+    await API.fetch(`/reviews/${reviewId}`, { method: "DELETE" });
+    showToast("Review deleted successfully", "success");
+    setTimeout(() => window.location.reload(), 1000);
+  } catch (err) {
+    showToast(err.message || "Failed to delete review", "error");
+  }
+}
+
 function renderStars(rating) {
   const full = Math.floor(rating);
   let stars = "";
@@ -735,7 +746,7 @@ async function initFeedPage() {
 
     stream.innerHTML = reviews.map(r => `
       <div class="review-card">
-        <div class="review-header">
+        <div class="review-header" style="align-items: flex-start;">
           <div class="review-author">
             <div class="avatar-circle">${(r.username || 'U').charAt(0)}</div>
             <div>
@@ -743,14 +754,12 @@ async function initFeedPage() {
               <div style="font-size:0.78rem; color:var(--text-muted);">${new Date(r.created_at || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
             </div>
           </div>
-          <div style="font-size:0.95rem;">${renderStars(r.rating)}</div>
-        </div>
-
-        <div class="review-movie-snippet">
-          <img src="${formatPosterUrl(r.poster_url, 'w185')}" class="review-movie-poster" onclick="window.location.href='/movie?id=${r.film_id}'" alt="${r.title}">
-          <div style="display:flex; flex-direction:column; justify-content:center;">
-            <a href="/movie?id=${r.film_id}" style="font-family:var(--font-heading); font-weight:700; color:#fff; text-decoration:none; font-size:1.1rem;">${r.title}</a>
-            <span style="font-size:0.8rem; color:var(--text-muted);">Reviewed Film</span>
+          <div style="display:flex; gap:0.75rem; align-items:center; text-align:right;">
+            <div style="display:flex; flex-direction:column; align-items:flex-end;">
+              <a href="/movie?id=${r.film_id}" style="font-family:var(--font-heading); font-weight:700; color:#fff; text-decoration:none; font-size:1rem; margin-bottom:0.2rem;">${r.title}</a>
+              <div>${renderStars(r.rating)}</div>
+            </div>
+            <img src="${formatPosterUrl(r.poster_url, 'w185')}" style="cursor:pointer; width:45px; height:65px; border-radius:6px; object-fit:cover; border:1px solid rgba(255,255,255,0.1);" onclick="window.location.href='/movie?id=${r.film_id}'" alt="${r.title}">
           </div>
         </div>
 
@@ -760,6 +769,11 @@ async function initFeedPage() {
           <button class="action-btn" onclick="toggleReviewLike(${r.review_id}, this)">
             <i class="fa-solid fa-heart"></i> <span class="like-count">${r.like_count || 0}</span>
           </button>
+          ${API.getUserId() == r.user_id ? `
+            <button class="action-btn" style="color:var(--accent-red); margin-left: 10px;" onclick="deleteReview(${r.review_id})">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          ` : ''}
         </div>
       </div>
     `).join("");
@@ -839,6 +853,11 @@ async function initMoviePage() {
                   <button class="action-btn" onclick="toggleReviewLike(${r.review_id}, this)">
                     <i class="fa-solid fa-heart"></i> <span class="like-count">${r.like_count || 0}</span>
                   </button>
+                  ${API.getUserId() == r.user_id ? `
+                    <button class="action-btn" style="color:var(--accent-red); margin-left: 10px;" onclick="deleteReview(${r.review_id})">
+                      <i class="fa-solid fa-trash"></i>
+                    </button>
+                  ` : ''}
                 </div>
               </div>
             `).join("")}
@@ -852,7 +871,7 @@ async function initMoviePage() {
               ${(movie.cast || []).length === 0 ? `<span style="color:var(--text-dim); font-size:0.85rem;">No cast details</span>` :
                 movie.cast.map(c => `
                   <div style="display:flex; justify-content:space-between; font-size:0.88rem; padding-bottom:0.45rem; border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <span style="font-weight:600; color:#fff;">${c.name}</span>
+                    <a href="/cast?id=${c.person_id}" style="font-weight:600; color:var(--accent-purple-light); text-decoration:none;">${c.name}</a>
                     <span style="color:var(--text-muted); font-size:0.8rem;">${c.role_name || 'Cast'}</span>
                   </div>
                 `).join("")}
@@ -1003,14 +1022,29 @@ async function loadUserReviewsTab(userId) {
 
     container.innerHTML = reviews.map(r => `
       <div class="review-card" style="margin-bottom:1rem;">
-        <div class="review-movie-snippet">
-          <img src="${formatPosterUrl(r.poster_url, 'w185')}" class="review-movie-poster" onclick="window.location.href='/movie?id=${r.film_id}'" alt="${r.title}">
-          <div style="display:flex; flex-direction:column; justify-content:center;">
-            <a href="/movie?id=${r.film_id}" style="font-family:var(--font-heading); font-weight:700; color:#fff; text-decoration:none; font-size:1.1rem;">${r.title}</a>
-            <div>${renderStars(r.rating)}</div>
+        <div class="review-header" style="align-items: flex-start;">
+          <div class="review-author">
+             <div style="font-size:0.8rem; color:var(--text-muted);"><i class="fa-solid fa-calendar"></i> ${new Date(r.created_at || Date.now()).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+          </div>
+          <div style="display:flex; gap:0.75rem; align-items:center; text-align:right;">
+            <div style="display:flex; flex-direction:column; align-items:flex-end;">
+              <a href="/movie?id=${r.film_id}" style="font-family:var(--font-heading); font-weight:700; color:#fff; text-decoration:none; font-size:1rem; margin-bottom:0.2rem;">${r.title}</a>
+              <div>${renderStars(r.rating)}</div>
+            </div>
+            <img src="${formatPosterUrl(r.poster_url, 'w185')}" style="cursor:pointer; width:45px; height:65px; border-radius:6px; object-fit:cover; border:1px solid rgba(255,255,255,0.1);" onclick="window.location.href='/movie?id=${r.film_id}'" alt="${r.title}">
           </div>
         </div>
         <p class="review-text">${r.review_text}</p>
+        <div class="review-actions" style="margin-top: 10px;">
+          <button class="action-btn" onclick="toggleReviewLike(${r.review_id}, this)">
+            <i class="fa-solid fa-heart"></i> <span class="like-count">${r.like_count || 0}</span>
+          </button>
+          ${API.getUserId() == userId ? `
+            <button class="action-btn" style="color:var(--accent-red); margin-left: 10px;" onclick="deleteReview(${r.review_id})">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          ` : ''}
+        </div>
       </div>
     `).join("");
   } catch (err) {
@@ -1229,5 +1263,58 @@ async function loadSidebarWatchlistGlance() {
     `).join("");
   } catch (err) {
     container.innerHTML = `<div style="font-size:0.82rem; color:var(--text-dim);">Unable to load watchlist</div>`;
+  }
+}
+
+// 7. CAST PAGE
+async function initCastPage() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const personId = urlParams.get("id");
+
+  if (!personId) {
+    window.location.href = "/";
+    return;
+  }
+
+  const container = document.getElementById("cast-filmography-grid");
+  const header = document.getElementById("cast-header");
+  if (!container || !header) return;
+
+  try {
+    const films = await API.fetch(`/movies/cast/${personId}/films`);
+    
+    if (films.length === 0) {
+      header.innerHTML = `<h1 style="color:#fff;">Cast Member Not Found</h1>`;
+      return;
+    }
+
+    const personName = films[0].person_name || "Cast Member";
+    document.title = `${personName} Filmography • CineVerse`;
+
+    header.innerHTML = `
+      <div style="padding:3rem 1rem; text-align:center;">
+        <div style="width:100px; height:100px; border-radius:50%; background:var(--accent-purple); display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:3rem; font-weight:bold; color:#fff;">
+          ${personName.charAt(0)}
+        </div>
+        <h1 style="font-family:var(--font-heading); color:#fff; font-size:2.2rem; margin-bottom:0.5rem;">${personName}</h1>
+        <p style="color:var(--text-muted);">${films.length} film(s)</p>
+      </div>
+    `;
+
+    container.innerHTML = films.map(f => `
+      <div class="movie-card" onclick="window.location.href='/movie?id=${f.film_id}'">
+        <div class="movie-poster-wrapper">
+          <img src="${formatPosterUrl(f.poster_url, 'w500')}" class="movie-poster" alt="${f.title}" loading="lazy">
+          <div class="movie-rating"><i class="fa-solid fa-star"></i> ${f.avg_rating || 'N/A'}</div>
+        </div>
+        <div class="movie-info">
+          <h3 class="movie-title">${f.title} <span class="movie-year">(${f.release_year || 'N/A'})</span></h3>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.3rem;"><i class="fa-solid fa-user"></i> ${f.role_name || 'Cast'}</p>
+        </div>
+      </div>
+    `).join("");
+
+  } catch (err) {
+    header.innerHTML = `<div style="text-align:center; color:var(--accent-red); padding:3rem;">Failed to load filmography</div>`;
   }
 }
