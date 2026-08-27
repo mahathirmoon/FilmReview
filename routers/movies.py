@@ -28,7 +28,7 @@ def get_homepage_movies(
         
 
         random_query = """
-            SELECT film_id, title, release_year, avg_rating, poster_url 
+            SELECT film_id, title, release_year, avg_rating, poster_url, description 
             FROM Films
             WHERE release_year>=2015
             ORDER BY release_year DESC, RAND(%s)
@@ -71,7 +71,7 @@ def search_movies(
         cursor = conn.cursor(dictionary=True)
         
         query = """
-            SELECT DISTINCT Films.film_id, Films.title, Films.release_year, Films.avg_rating, Films.poster_url
+            SELECT DISTINCT Films.film_id, Films.title, Films.release_year, Films.avg_rating, Films.poster_url, Films.description
             FROM Films
         """
         conditions = []
@@ -133,6 +133,116 @@ def search_movies(
             cursor.close()
 
 
+@router.get("/{film_id}/cast")
+def movie_cast(film_id: int, conn=Depends(get_db)):
+    """Return all cast and crew entries for a specific movie."""
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT people.person_id, people.name, film_cast.role_name
+            FROM film_cast
+            JOIN people ON film_cast.person_id = people.person_id
+            WHERE film_cast.film_id = %s
+            ORDER BY people.name ASC
+        """
+        cursor.execute(query, (film_id,))
+        cast_members = cursor.fetchall()
+
+        if not cast_members:
+            return []
+
+        return cast_members
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+@router.get("/cast/{person_id}/films")
+def person_filmography(person_id: int, conn=Depends(get_db)):
+    """Return all films linked to a specific cast member."""
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT films.film_id, films.title, films.release_year, films.poster_url, films.avg_rating,
+                   film_cast.role_name
+            FROM film_cast
+            JOIN films ON film_cast.film_id = films.film_id
+            WHERE film_cast.person_id = %s
+            ORDER BY films.release_year DESC, films.title ASC
+        """
+        cursor.execute(query, (person_id,))
+        filmography = cursor.fetchall()
+
+        if not filmography:
+            return []
+
+        return filmography
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+
+
+@router.get("/trending")
+def get_trending_movies(
+    limit: int = Query(5, ge=1, le=20, description="How many trending movies to return"),
+    conn=Depends(get_db)
+):
+    """Return the most discussed movies by review count, using the existing Reviews table."""
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT f.film_id, f.title, f.release_year, f.avg_rating, f.poster_url, f.description,
+                   COUNT(r.review_id) AS review_count
+            FROM Films f
+            LEFT JOIN Reviews r ON r.film_id = f.film_id
+            GROUP BY f.film_id, f.title, f.release_year, f.avg_rating, f.poster_url, f.description
+            ORDER BY review_count DESC, f.avg_rating DESC, f.release_year DESC
+            LIMIT %s
+        """
+        cursor.execute(query, (limit,))
+        movies = cursor.fetchall()
+        return {"results": movies}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor:
+            cursor.close()
+
+
+@router.get("/top-rated")
+@router.get("/top-5star")
+def get_top_rated_movies(
+    limit: int = Query(5, ge=1, le=20, description="How many top-rated movies to return"),
+    minimum_rating: float = Query(4.5, ge=0, le=5, description="Minimum average rating to include"),
+    conn=Depends(get_db)
+):
+    """Return the best-rated films using the existing Films.avg_rating field."""
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        query = """
+            SELECT film_id, title, release_year, avg_rating, poster_url, description
+            FROM Films
+            WHERE avg_rating >= %s
+            ORDER BY avg_rating DESC, release_year DESC
+            LIMIT %s
+        """
+        cursor.execute(query, (minimum_rating, limit))
+        movies = cursor.fetchall()
+        return {"results": movies}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor:
+            cursor.close()
+
 
 @router.get("/{id}")
 def movie(id:int,conn = Depends(get_db)):
@@ -154,11 +264,11 @@ def movie(id:int,conn = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Movie not found")
 
         reviews_query = """
-            SELECT users.username, reviews.rating, reviews.review_text, reviews.created_at
-            FROM reviews
-            JOIN users ON reviews.user_id = users.user_id
-            WHERE reviews.film_id = %s
-            ORDER BY reviews.created_at DESC
+           SELECT reviews.review_id, users.username, reviews.rating, reviews.review_text, reviews.created_at, reviews.like_count
+    FROM reviews
+    JOIN users ON reviews.user_id = users.user_id
+    WHERE reviews.film_id = %s
+    ORDER BY reviews.created_at DESC
         """
         cursor.execute(reviews_query,(id,))
         movie["reviews"] = cursor.fetchall()
@@ -200,11 +310,3 @@ def movie(id:int,conn = Depends(get_db)):
     finally:
         if 'cursor' in locals():
             cursor.close()
-
-
-
-
-
-
-    
-    

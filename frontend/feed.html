@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity Feed • CineVerse</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <nav id="navbar" class="navbar"></nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+    <div class="social-grid-layout">
+      <div>
+        <div class="section-header" style="margin-top:0;">
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-layer-group" style="color:var(--accent-purple);"></i> Social Activity Feed</h2>
+            <span style="font-size:0.85rem; color:var(--text-muted);">Recent film reviews and ratings from critics you follow</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openReviewModal()"><i class="fa-solid fa-plus"></i> New Review</button>
+        </div>
+
+        <div id="feed-stream" class="feed-stream">
+          <div style="text-align:center; padding:3rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin fa-lg"></i> Loading activity feed...</div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="sidebar-widget">
+          <h4 class="widget-title"><i class="fa-solid fa-user-plus" style="color:var(--accent-cyan);"></i> Suggested Critics</h4>
+          <div id="sidebar-suggestions">
+            <div style="font-size:0.85rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin"></i> Loading suggested critics...</div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

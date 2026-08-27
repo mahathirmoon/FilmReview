@@ -21,7 +21,25 @@ router = APIRouter(
 
 
 
-@router.post("/me/watchlist/{film_id}", status_code=status.HTTP_201_CREATED)
+@router.get("/me")
+def get_my_watchlist(current_user=Depends(get_current_user), conn=Depends(get_db)):
+    cursor = conn.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT f.film_id, f.title, f.poster_url, f.release_year, 
+                   (SELECT AVG(rating) FROM reviews WHERE film_id = f.film_id) as avg_rating
+            FROM watchlist w
+            JOIN films f ON w.film_id = f.film_id
+            WHERE w.user_id = %s
+            ORDER BY w.added_at DESC
+        """, (current_user["user_id"],))
+        return cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cursor.close()
+
+@router.post("/me/{film_id}", status_code=status.HTTP_201_CREATED)
 def add_to_watchlist(film_id: int, current_user=Depends(get_current_user), conn=Depends(get_db)):
     cursor = conn.cursor(dictionary=True)
     try:
@@ -64,7 +82,7 @@ def add_to_watchlist(film_id: int, current_user=Depends(get_current_user), conn=
 
 
 
-@router.delete("/me/watchlist/{film_id}")
+@router.delete("/me/{film_id}")
 def remove_from_watchlist(film_id: int, current_user=Depends(get_current_user), conn=Depends(get_db)):
     cursor = conn.cursor(dictionary=True)
     try:

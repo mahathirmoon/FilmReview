@@ -11,6 +11,39 @@ router = APIRouter(
     prefix="/users",
     tags=["User"]
 )
+from fastapi import APIRouter, HTTPException, Query, Depends
+from database import get_db
+
+router = APIRouter(
+    prefix="/users",
+    tags=["User"]
+)
+
+@router.get("/search")
+def search_users(
+    username: str = Query(..., min_length=1, description="Username or partial username to search for"),
+    conn=Depends(get_db)
+):
+    cursor = None
+    try:
+        cleaned = username.strip()
+        if not cleaned:
+            raise HTTPException(status_code=400, detail="Search query cannot be empty")
+
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT user_id, username FROM users WHERE username LIKE %s LIMIT 20",
+            (f"%{cleaned}%",)
+        )
+        return cursor.fetchall()  # empty list if no matches — that's fine, not an error
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if cursor:
+            cursor.close()
 
 @router.get("/me")
 def get_my_profile(current_user=Depends(get_current_user)):
@@ -79,6 +112,3 @@ def get_following(user_id: int, conn=Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
-
-
-

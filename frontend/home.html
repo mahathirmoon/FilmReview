@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineVerse • Discover Movies & Film Community</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+  <!-- Dynamic Header Bar -->
+  <nav id="navbar" class="navbar"></nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+    <!-- Featured Hero Banner -->
+    <div id="hero-banner" class="hero-banner">
+      <div style="position:relative; z-index:2; padding:2.5rem;">
+        <span class="hero-tag"><i class="fa-solid fa-sparkles"></i> Welcome to CineVerse</span>
+        <h1 class="hero-title">Discover, Review & Share Films</h1>
+        <p class="hero-desc">The ultimate platform for film lovers. Build custom watchlists, write detailed reviews, and connect with top film critics in real time.</p>
+        <div style="display:flex; gap:0.85rem; flex-wrap:wrap;">
+          <a href="#trending-section" class="btn btn-primary"><i class="fa-solid fa-fire"></i> Explore Trending</a>
+          <button class="btn btn-secondary" onclick="openReviewModal()"><i class="fa-solid fa-pen-to-square"></i> Post a Review</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layout Grid -->
+    <div class="social-grid-layout">
+      <!-- Main Content Column -->
+      <div>
+        <!-- Section 1: Trending & Most Discussed -->
+        <div id="trending-section" class="section-header">
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-fire" style="color:var(--accent-pink);"></i> Trending & Most Discussed</h2>
+            <span style="font-size:0.85rem; color:var(--text-muted);">Hot topics in the film community</span>
+          </div>
+        </div>
+        <div class="carousel-wrapper">
+          <button class="carousel-nav-btn prev" onclick="scrollCarousel('trending-row', -1)" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button>
+          <div id="trending-row" class="modern-carousel">
+            <div style="padding:2rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin"></i> Loading trending movies...</div>
+          </div>
+          <button class="carousel-nav-btn next" onclick="scrollCarousel('trending-row', 1)" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Section 2: Top-Rated Masterpieces -->
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-trophy" style="color:var(--accent-gold);"></i> Top-Rated Masterpieces</h2>
+            <span style="font-size:0.85rem; color:var(--text-muted);">Highest community rating ★ 4.5+</span>
+          </div>
+        </div>
+        <div class="carousel-wrapper">
+          <button class="carousel-nav-btn prev" onclick="scrollCarousel('top-rated-row', -1)" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button>
+          <div id="top-rated-row" class="modern-carousel">
+            <div style="padding:2rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin"></i> Loading top rated movies...</div>
+          </div>
+          <button class="carousel-nav-btn next" onclick="scrollCarousel('top-rated-row', 1)" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Section 3: Latest Releases -->
+        <div class="section-header">
+          <div>
+            <h2 class="section-title"><i class="fa-solid fa-clapperboard" style="color:var(--accent-cyan);"></i> Latest Releases</h2>
+            <span style="font-size:0.85rem; color:var(--text-muted);">New in cinema & streaming</span>
+          </div>
+        </div>
+        <div class="carousel-wrapper">
+          <button class="carousel-nav-btn prev" onclick="scrollCarousel('latest-row', -1)" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button>
+          <div id="latest-row" class="modern-carousel">
+            <div style="padding:2rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin"></i> Loading latest releases...</div>
+          </div>
+          <button class="carousel-nav-btn next" onclick="scrollCarousel('latest-row', 1)" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Filter Controls Bar -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label class="form-label" style="margin:0;"><i class="fa-solid fa-filter" style="color:var(--accent-purple);"></i> Genre:</label>
+            <select id="genre-filter" class="filter-select">
+              <option value="">All Genres</option>
+              <option value="Action">Action</option>
+              <option value="Adventure">Adventure</option>
+              <option value="Animation">Animation</option>
+              <option value="Comedy">Comedy</option>
+              <option value="Crime">Crime</option>
+              <option value="Drama">Drama</option>
+              <option value="Fantasy">Fantasy</option>
+              <option value="Horror">Horror</option>
+              <option value="Romance">Romance</option>
+              <option value="Sci-Fi">Sci-Fi</option>
+              <option value="Thriller">Thriller</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="form-label" style="margin:0;"><i class="fa-solid fa-sort" style="color:var(--accent-cyan);"></i> Sort By:</label>
+            <select id="sort-filter" class="filter-select">
+              <option value="rating">Highest Rated</option>
+              <option value="year">Release Year</option>
+              <option value="title">Movie Title</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Section 4: All Movies / Explore Feed -->
+        <div class="section-header">
+          <h2 class="section-title"><i class="fa-solid fa-film"></i> Discover All Movies</h2>
+        </div>
+
+        <!-- Movies Grid -->
+        <div id="movies-grid" class="movies-grid"></div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-container">
+          <button id="prev-page" class="page-btn" onclick="loadMoviesFeed(currentPage - 1)"><i class="fa-solid fa-arrow-left"></i> Previous</button>
+          <button id="next-page" class="page-btn" onclick="loadMoviesFeed(currentPage + 1)">Next <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <aside>
+        <!-- Widget 1: Movie Roulette ("Surprise Me!") -->
+        <div class="sidebar-widget roulette-widget">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <h4 class="widget-title" style="border:none; margin:0; padding:0;"><i class="fa-solid fa-dice-five" style="color:var(--accent-pink);"></i> Movie Roulette</h4>
+            <span class="roulette-badge"><i class="fa-solid fa-sparkles"></i> Lucky Pick</span>
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin:0.6rem 0 1rem 0;">Can't decide what to watch? Let CineVerse pick a hidden gem for you!</p>
+          <button class="btn btn-accent btn-full btn-roulette" onclick="triggerMovieRoulette()">
+            <i class="fa-solid fa-shuffle"></i> Surprise Me!
+          </button>
+        </div>
+
+        <!-- Widget 2: Quick Watchlist Glance -->
+        <div class="sidebar-widget">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.85rem; padding-bottom:0.65rem; border-bottom:1px solid var(--border-subtle);">
+            <h4 class="widget-title" style="border:none; margin:0; padding:0;"><i class="fa-solid fa-bookmark" style="color:var(--accent-gold);"></i> Watchlist Glance</h4>
+            <a href="/profile" style="font-size:0.78rem; color:var(--accent-purple-light); font-weight:700; text-decoration:none;">View All <i class="fa-solid fa-chevron-right"></i></a>
+          </div>
+          <div id="sidebar-watchlist-glance">
+            <div style="font-size:0.85rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin"></i> Loading watchlist...</div>
+          </div>
+        </div>
+
+        <!-- Widget 3: Popular Genres -->
+        <div class="sidebar-widget">
+          <h4 class="widget-title"><i class="fa-solid fa-tags" style="color:var(--accent-cyan);"></i> Popular Genres</h4>
+          <div class="sidebar-genre-pills">
+            <button class="genre-pill" onclick="quickSelectGenre('Action')"><i class="fa-solid fa-explosion" style="color:#f43f5e;"></i> Action</button>
+            <button class="genre-pill" onclick="quickSelectGenre('Sci-Fi')"><i class="fa-solid fa-rocket" style="color:#06b6d4;"></i> Sci-Fi</button>
+            <button class="genre-pill" onclick="quickSelectGenre('Horror')"><i class="fa-solid fa-ghost" style="color:#a855f7;"></i> Horror</button>
+            <button class="genre-pill" onclick="quickSelectGenre('Drama')"><i class="fa-solid fa-masks-theater" style="color:#fbbf24;"></i> Drama</button>
+            <button class="genre-pill" onclick="quickSelectGenre('Comedy')"><i class="fa-solid fa-face-laugh-beam" style="color:#10b981;"></i> Comedy</button>
+            <button class="genre-pill" onclick="quickSelectGenre('Animation')"><i class="fa-solid fa-wand-magic-sparkles" style="color:#ec4899;"></i> Animation</button>
+            <button class="genre-pill" onclick="quickSelectGenre('Thriller')"><i class="fa-solid fa-skull" style="color:#f97316;"></i> Thriller</button>
+            <button class="genre-pill" onclick="quickSelectGenre('Romance')"><i class="fa-solid fa-heart" style="color:#f43f5e;"></i> Romance</button>
+          </div>
+        </div>
+
+        <!-- Widget 4: Community Stats & Highlights -->
+        <div class="sidebar-widget">
+          <h4 class="widget-title"><i class="fa-solid fa-chart-line" style="color:var(--accent-purple);"></i> Community Hub</h4>
+          <div class="sidebar-stats-grid">
+            <div class="stat-card">
+              <span class="stat-val">500+</span>
+              <span class="stat-lbl">Films</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-val">1.2K+</span>
+              <span class="stat-lbl">Reviews</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-val">★ 4.9</span>
+              <span class="stat-lbl">Top Rated</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 5: Suggested Critics -->
+        <div class="sidebar-widget">
+          <h4 class="widget-title"><i class="fa-solid fa-user-plus" style="color:var(--accent-cyan);"></i> Suggested Critics</h4>
+          <div id="sidebar-suggestions">
+            <div style="font-size:0.85rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin"></i> Loading suggested critics...</div>
+          </div>
+        </div>
+
+        <!-- Widget 6: Community Info Widget -->
+        <div class="sidebar-widget">
+          <h4 class="widget-title"><i class="fa-solid fa-circle-info" style="color:var(--accent-purple);"></i> About CineVerse</h4>
+          <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.65;">
+            CineVerse allows movie buffs to rate films, curate custom watchlists, write in-depth reviews, and build social feeds from top film critics.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

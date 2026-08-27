@@ -33,7 +33,7 @@ def get_activity_feed(
             SELECT
                 users.user_id, users.username,
                 reviews.review_id, reviews.film_id, films.title, films.poster_url,
-                reviews.rating, reviews.review_text, reviews.created_at
+                reviews.rating, reviews.review_text, reviews.created_at, reviews.like_count
             FROM reviews
             JOIN follows ON follows.followee_id = reviews.user_id
             JOIN users ON users.user_id = reviews.user_id
@@ -57,10 +57,6 @@ def get_activity_feed(
     finally:
         cursor.close()
 
-
-# ---------------------------------------------------------------------------
-# PUBLIC PROFILES
-# ---------------------------------------------------------------------------
 
 @router.get("/{user_id}")
 def get_public_profile(user_id: int, conn=Depends(get_db)):
@@ -97,7 +93,7 @@ def get_user_reviews(user_id: int, conn=Depends(get_db)):
     try:
         cursor.execute("""
             SELECT reviews.review_id, reviews.film_id, films.title, films.poster_url,
-                   reviews.rating, reviews.review_text, reviews.created_at
+                   reviews.rating, reviews.review_text, reviews.created_at, reviews.like_count
             FROM reviews
             JOIN films ON reviews.film_id = films.film_id
             WHERE reviews.user_id = %s

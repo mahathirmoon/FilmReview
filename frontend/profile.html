@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile • CineVerse</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <nav id="navbar" class="navbar"></nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+    <div id="profile-header">
+      <div style="text-align:center; padding:3rem; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--accent-purple);"></i></div>
+    </div>
+
+    <div style="margin-top:2rem;">
+      <div class="auth-tabs" style="max-width:380px; margin-bottom:1.75rem;">
+        <div id="prof-tab-reviews" class="auth-tab active" onclick="switchProfileTab('reviews', this)"><i class="fa-solid fa-star"></i> Reviews</div>
+        <div id="prof-tab-watchlist" class="auth-tab" onclick="switchProfileTab('watchlist', this)"><i class="fa-solid fa-bookmark"></i> Watchlist</div>
+      </div>
+
+      <div id="tab-reviews-content">
+        <div id="user-reviews-tab"></div>
+      </div>
+
+      <div id="tab-watchlist-content" style="display:none;">
+        <div id="user-watchlist-tab"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/script.js"></script>
+  <script>
+    function switchProfileTab(tab, el) {
+      document.querySelectorAll('.auth-tabs .auth-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      if (tab === 'reviews') {
+        document.getElementById('tab-reviews-content').style.display = 'block';
+        document.getElementById('tab-watchlist-content').style.display = 'none';
+      } else {
+        document.getElementById('tab-reviews-content').style.display = 'none';
+        document.getElementById('tab-watchlist-content').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FilmHub — preview</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="brand">FilmHub</div>
+    <div class="nav-links">
+      <span>Home</span>
+      <span>Genres</span>
+      <span>Watchlist</span>
+      <a href="#">Activity Feed</a>
+    </div>
+    <div class="nav-search">
+      <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="text" placeholder="Search movies…" />
+    </div>
+    <div class="nav-actions">
+      <a class="btn" href="#">Log in</a>
+      <a class="btn btn-primary" href="#">Sign up</a>
+    </div>
+  </nav>
+
+  <section class="section">
+    <h2>Discover</h2>
+    <div class="poster-grid" id="grid"></div>
+  </section>
+
+  <script>
+    const titles = ["The Odyssey","Mutiny","Reacher","Lioness","Spider-Man: Brand New Day","The Mentalist","Wake Up Dead Man","Predator: Badlands","Nobody 2","Eternity","One Battle After Another","Tron: Ares"];
+    const grid = document.getElementById("grid");
+    grid.innerHTML = titles.map((t, i) => `
+      <a class="poster-card" href="#">
+        <img src="https://picsum.photos/seed/filmhub${i}/300/450" alt="${t} poster" loading="lazy" />
+        <div class="poster-title">${t}</div>
+      </a>
+    `).join("");
+  </script>
+</body>
+</html>

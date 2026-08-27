@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In & Sign Up • CineVerse</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body style="display:flex; align-items:center; justify-content:center; min-height:100vh;">
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <a href="/" class="brand-logo" style="justify-content:center; margin-bottom:0.6rem; font-size:1.9rem;">
+          <i class="fa-solid fa-film"></i>
+          <span>CINEVERSE</span>
+          <span class="brand-badge">PRO</span>
+        </a>
+        <p style="font-size:0.88rem; color:var(--text-muted);">Sign in to your account to rate films, write reviews & connect</p>
+      </div>
+
+      <div class="auth-tabs" style="margin-bottom:1.5rem;">
+        <div id="tab-btn-login" class="auth-tab active" onclick="switchAuthTab('login')"><i class="fa-solid fa-right-to-bracket"></i> Sign In</div>
+        <div id="tab-btn-register" class="auth-tab" onclick="switchAuthTab('register')"><i class="fa-solid fa-user-plus"></i> Register</div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-envelope" style="color:var(--accent-purple);"></i> Email Address</label>
+          <input type="email" id="login-email" class="form-input" placeholder="user@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-lock" style="color:var(--accent-cyan);"></i> Password</label>
+          <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full" style="margin-top:1.25rem;">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" style="display:none;">
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-user" style="color:var(--accent-pink);"></i> Username</label>
+          <input type="text" id="register-username" class="form-input" placeholder="moviebuff99" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-envelope" style="color:var(--accent-purple);"></i> Email Address</label>
+          <input type="email" id="register-email" class="form-input" placeholder="user@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-lock" style="color:var(--accent-cyan);"></i> Password</label>
+          <input type="password" id="register-password" class="form-input" placeholder="Min 6 characters" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-accent btn-full" style="margin-top:1.25rem;">
+          <i class="fa-solid fa-user-plus"></i> Create Account
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>

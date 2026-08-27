@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discover Critics • CineVerse</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <nav id="navbar" class="navbar"></nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+    <div class="section-header" style="margin-bottom:1.8rem;">
+      <div>
+        <h2 class="section-title"><i class="fa-solid fa-users" style="color:var(--accent-purple);"></i> Discover Critics to Follow</h2>
+        <p style="font-size:0.88rem; color:var(--text-muted); margin-top:0.25rem;">Connect with film enthusiasts and active reviewers to build your social activity feed.</p>
+      </div>
+    </div>
+
+    <div id="suggestions-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1.25rem;">
+      <div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-dim);"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--accent-cyan);"></i></div>
+    </div>
+  </main>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
