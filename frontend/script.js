@@ -39,7 +39,23 @@ const API = {
       }
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.detail || data.message || "An error occurred");
+        let errorMsg = "An error occurred";
+        if (data.detail) {
+          if (Array.isArray(data.detail)) {
+            errorMsg = data.detail.map(e => {
+              let m = e.msg || JSON.stringify(e);
+              if (m.includes("String should have at least")) {
+                m = m.replace("String", "Password");
+              }
+              return m;
+            }).join(", ");
+          } else {
+            errorMsg = data.detail;
+          }
+        } else if (data.message) {
+          errorMsg = data.message;
+        }
+        throw new Error(errorMsg);
       }
       return data;
     } catch (err) {
@@ -168,6 +184,16 @@ function setupGlobalSearch() {
   if (!input || !dropdown) return;
 
   let debounceTimer;
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const query = e.target.value.trim();
+      if (query.length > 0) {
+        window.location.href = `/?search=${encodeURIComponent(query)}`;
+      }
+    }
+  });
+
   input.addEventListener("input", (e) => {
     clearTimeout(debounceTimer);
     const query = e.target.value.trim();
@@ -498,13 +524,32 @@ function renderStars(rating) {
 // 1. HOME PAGE
 let currentPage = 1;
 async function initHomePage() {
-  loadTrendingHero();
-  loadTrendingSection();
-  loadTopRatedSection();
-  loadLatestReleasesSection();
-  loadMoviesFeed(1);
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchQuery = urlParams.get("search");
+
+  if (searchQuery) {
+    const hero = document.getElementById("hero-banner");
+    const carousels = document.getElementById("home-carousels");
+    const gridTitle = document.getElementById("movies-grid-title");
+    const searchInput = document.getElementById("global-search-input");
+    
+    if (hero) hero.style.display = "none";
+    if (carousels) carousels.style.display = "none";
+    if (gridTitle) gridTitle.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Search Results for '${searchQuery}'`;
+    if (searchInput) searchInput.value = searchQuery;
+
+    filterMovies();
+  } else {
+    loadTrendingHero();
+    loadTrendingSection();
+    loadTopRatedSection();
+    loadLatestReleasesSection();
+    loadMoviesFeed(1);
+  }
+
   loadSidebarSuggestions();
   loadSidebarWatchlistGlance();
+  loadCommunityHubChart();
 
   const genreFilter = document.getElementById("genre-filter");
   const sortFilter = document.getElementById("sort-filter");
@@ -657,11 +702,16 @@ async function filterMovies() {
   const genre = document.getElementById("genre-filter").value;
   const sort = document.getElementById("sort-filter").value;
   const grid = document.getElementById("movies-grid");
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchQuery = urlParams.get("search");
+
   grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:3rem;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--accent-purple);"></i></div>`;
 
   try {
     let url = `/movies/search?page=1&limit=20&sort_by=${sort}`;
     if (genre) url += `&genre=${encodeURIComponent(genre)}`;
+    if (searchQuery) url += `&title=${encodeURIComponent(searchQuery)}`;
 
     const data = await API.fetch(url);
     renderMoviesGrid(Array.isArray(data) ? data : data.results || []);
@@ -1069,9 +1119,6 @@ async function loadUserWatchlistTab(userId) {
           <div class="movie-card" onclick="window.location.href='/movie?id=${m.film_id}'">
             <div class="movie-poster-wrapper">
               <img src="${formatPosterUrl(m.poster_url, 'w500')}" class="movie-poster" alt="${m.title}">
-              <div class="movie-poster-overlay">
-                <div class="rating-badge"><i class="fa-solid fa-star"></i> ${m.avg_rating || 'N/A'}</div>
-              </div>
             </div>
             <div class="movie-info">
               <div class="movie-title">${m.title}</div>
@@ -1177,7 +1224,7 @@ async function loadSidebarSuggestions() {
             <div style="font-size:0.75rem; color:var(--text-muted);">${u.review_count || 0} reviews</div>
           </div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="handleFollowUser(${u.user_id}, this)">Follow</button>
+        <button class="btn btn-primary btn-sm" onclick="handleFollowUser(${u.user_id}, this)">Follow</button>
       </div>
     `).join("");
   } catch (err) {
@@ -1256,7 +1303,6 @@ async function loadSidebarWatchlistGlance() {
           <div class="glance-title">${item.title}</div>
           <div class="glance-meta">
             <span>${item.release_year || 'N/A'}</span>
-            <span style="color:var(--accent-gold); font-weight:700;"><i class="fa-solid fa-star"></i> ${item.avg_rating || 'N/A'}</span>
           </div>
         </div>
       </a>
@@ -1316,5 +1362,59 @@ async function initCastPage() {
 
   } catch (err) {
     header.innerHTML = `<div style="text-align:center; color:var(--accent-red); padding:3rem;">Failed to load filmography</div>`;
+  }
+}
+
+async function loadCommunityHubChart() {
+  const container = document.getElementById("community-hub-chart-container");
+  if (!container) return;
+
+  try {
+    const data = await API.fetch("/movies/top-rated?limit=20&minimum_rating=0");
+    const movies = Array.isArray(data) ? data : data.results || [];
+    
+    if (movies.length === 0) {
+      container.innerHTML = `<div style="font-size:0.85rem; color:var(--text-dim);">No data available.</div>`;
+      return;
+    }
+
+    const decadeCounts = {};
+    movies.forEach(m => {
+      if (m.release_year) {
+        const decade = Math.floor(m.release_year / 10) * 10;
+        decadeCounts[decade] = (decadeCounts[decade] || 0) + 1;
+      }
+    });
+
+    const sortedDecades = Object.keys(decadeCounts).sort((a, b) => a - b);
+    let maxCount = 0;
+    sortedDecades.forEach(d => { if (decadeCounts[d] > maxCount) maxCount = decadeCounts[d]; });
+
+    let chartHTML = `
+      <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.85rem; line-height: 1.4;">
+        A breakdown of the Top 20 rated films by release decade.
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+    `;
+
+    sortedDecades.forEach(decade => {
+      const count = decadeCounts[decade];
+      const widthPercent = (count / maxCount) * 100;
+      chartHTML += `
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem;">
+          <div style="width: 35px; color: var(--text-dim); font-weight: bold;">${decade}s</div>
+          <div style="flex: 1; background: rgba(255,255,255,0.05); border-radius: 4px; height: 12px; overflow: hidden; position: relative;">
+            <div style="width: ${widthPercent}%; background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); height: 100%; border-radius: 4px;"></div>
+          </div>
+          <div style="width: 25px; text-align: right; font-weight: bold; color: #fff;">${count}</div>
+        </div>
+      `;
+    });
+
+    chartHTML += `</div>`;
+    container.innerHTML = chartHTML;
+
+  } catch (err) {
+    container.innerHTML = `<div style="font-size:0.85rem; color:var(--accent-red);">Failed to load stats.</div>`;
   }
 }
