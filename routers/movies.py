@@ -115,7 +115,7 @@ def search_movies(
         query += f" ORDER BY {safe_column} {safe_order} LIMIT %s OFFSET %s"
         params.extend([limit, offset])
         
-        # ---------------------------------
+      
         
         cursor.execute(query, tuple(params))
         movies = cursor.fetchall()

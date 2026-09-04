@@ -137,12 +137,28 @@ def create_review(review:postReview,conn = Depends(get_db),current_user=Depends(
                            VALUES(%s,%s,%s,%s) """
 
         cursor.execute(insert_query, (
-            current_user['user_id'],  # <-- Extracted from the token!
+            current_user['user_id'],  
             review.film_id,
             review.rating,
             review.review_text
         ))
         conn.commit()
+        sum_query=""" SELECT AVG(rating) FROM reviews WHERE film_id=%s"""
+        cursor.execute(sum_query,(review.film_id,))
+        avg = cursor.fetchone()[0]
+        cursor.execute("SELECT avg_rating FROM films Where film_id=%s",(review.film_id,))
+        r_avg=cursor.fetchone()[0]
+        if r_avg==0:
+            cursor.execute("UPDATE films SET avg_rating=%s Where film_id=%s",(avg,review.film_id))
+        elif r_avg:    
+         avg_rating=float((avg+r_avg)/2)
+         cursor.execute("UPDATE films SET avg_rating=%s Where film_id=%s",(avg_rating,review.film_id))
+
+        conn.commit()
+
+
+
+
         return {"messeage":"Review posted"}
 
     except HTTPException:
